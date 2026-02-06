@@ -18,6 +18,20 @@ logo_path = os.path.join(public_dir, 'logo.png')
 logo = Image.open(logo_path)
 logo = logo.convert('RGBA')
 
+# Remove white/light background - make it transparent
+datas = logo.getdata()
+new_data = []
+for item in datas:
+    # If pixel is whitish or very light, make it transparent
+    if item[0] > 200 and item[1] > 200 and item[2] > 200:
+        new_data.append((10, 10, 10, 0))  # Transparent
+    # If pixel is close to a common bg gray, also make transparent
+    elif item[0] > 180 and item[1] > 180 and item[2] > 180:
+        new_data.append((10, 10, 10, 0))
+    else:
+        new_data.append(item)
+logo.putdata(new_data)
+
 # Resize logo to fit nicely (80px height)
 logo_height = 100
 logo_ratio = logo.width / logo.height
