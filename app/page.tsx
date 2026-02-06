@@ -11,7 +11,7 @@ interface Video {
   rating?: number;
   thumb_url: string;
   category: string;
-  author: string;
+  author_name: string;
 }
 
 const categories = [
