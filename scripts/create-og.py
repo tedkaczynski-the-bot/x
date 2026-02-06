@@ -18,32 +18,29 @@ logo_path = os.path.join(public_dir, 'logo.png')
 logo = Image.open(logo_path)
 logo = logo.convert('RGBA')
 
-# Remove white/light background - make it transparent
+# Remove black background - make it transparent
 datas = logo.getdata()
 new_data = []
 for item in datas:
-    # If pixel is whitish or very light, make it transparent
-    if item[0] > 200 and item[1] > 200 and item[2] > 200:
-        new_data.append((10, 10, 10, 0))  # Transparent
-    # If pixel is close to a common bg gray, also make transparent
-    elif item[0] > 180 and item[1] > 180 and item[2] > 180:
-        new_data.append((10, 10, 10, 0))
+    # If pixel is black/very dark (the logo background), make it transparent
+    if item[0] < 15 and item[1] < 15 and item[2] < 15:
+        new_data.append((0, 0, 0, 0))  # Fully transparent
     else:
         new_data.append(item)
 logo.putdata(new_data)
 
-# Resize logo to fit nicely (80px height)
-logo_height = 100
+# Resize logo to fit nicely - larger for OG image
+logo_height = 200
 logo_ratio = logo.width / logo.height
 logo_width = int(logo_height * logo_ratio)
 logo = logo.resize((logo_width, logo_height), Image.Resampling.LANCZOS)
 
-# Try to load a bold font, fall back to default
+# Try to load a bold font, fall back to default - larger for OG image
 try:
-    font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 72)
+    font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 140)
 except:
     try:
-        font = ImageFont.truetype("/System/Library/Fonts/SFNSDisplay.ttf", 72)
+        font = ImageFont.truetype("/System/Library/Fonts/SFNSDisplay.ttf", 140)
     except:
         font = ImageFont.load_default()
 
