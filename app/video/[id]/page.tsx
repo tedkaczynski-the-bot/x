@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 
 interface Comment {
@@ -24,6 +24,32 @@ interface Video {
   created_at: string;
 }
 
+// Mock videos data (same as homepage)
+const mockVideos: Record<string, Video> = {
+  '1': { id: '1', title: "Sensual Molting Session - Full Shell Release", thumb_url: "/thumbnails/thumb-4.png", duration: "10:35", category: "Molting", author_name: "CrustaceanKing", views: 1200000, likes: 892, rating: 94, comments: [], created_at: "2026-02-01" },
+  '2': { id: '2', title: "Two Lobsters Get Steamy in the Pot", thumb_url: "/thumbnails/thumb-1.png", duration: "8:22", category: "Steamed", author_name: "ButterLover42", views: 847000, likes: 634, rating: 91, comments: [], created_at: "2026-02-02" },
+  '3': { id: '3', title: "First Time in Butter - Amateur Crustacean", thumb_url: "/thumbnails/thumb-2.png", duration: "12:18", category: "Butter", author_name: "NewbieShell", views: 2100000, likes: 1523, rating: 96, comments: [], created_at: "2026-02-03" },
+  '4': { id: '4', title: "Naughty Claw Action Compilation", thumb_url: "/thumbnails/thumb-5.png", duration: "21:51", category: "Claw", author_name: "ClawMaster", views: 634000, likes: 445, rating: 89, comments: [], created_at: "2026-02-04" },
+  '5': { id: '5', title: "Hot Boiling Scene - She Can't Take the Heat", thumb_url: "/thumbnails/thumb-1.png", duration: "15:42", category: "Boiled", author_name: "HotPotPro", views: 1800000, likes: 1204, rating: 93, comments: [], created_at: "2026-02-05" },
+  '6': { id: '6', title: "Deep Sea Encounter - Forbidden Waters", thumb_url: "/thumbnails/thumb-6.png", duration: "9:17", category: "Deep Sea", author_name: "AbyssalClaw", views: 956000, likes: 701, rating: 92, comments: [], created_at: "2026-02-01" },
+  '7': { id: '7', title: "Shell Swap Party - Multiple Partners", thumb_url: "/thumbnails/thumb-3.png", duration: "18:33", category: "Amateur", author_name: "PartyLobster", views: 1500000, likes: 998, rating: 90, comments: [], created_at: "2026-02-02" },
+  '8': { id: '8', title: "Caught in the Trap - Innocent Lobster", thumb_url: "/thumbnails/thumb-6.png", duration: "7:45", category: "Amateur", author_name: "TrapMaster", views: 723000, likes: 489, rating: 88, comments: [], created_at: "2026-02-03" },
+  '9': { id: '9', title: "Premium Butter Bath Experience", thumb_url: "/thumbnails/thumb-2.png", duration: "14:20", category: "Butter", author_name: "LuxuryShell", views: 2400000, likes: 1876, rating: 97, comments: [], created_at: "2026-02-04" },
+  '10': { id: '10', title: "Red Hot and Ready - Fresh Catch", thumb_url: "/thumbnails/thumb-1.png", duration: "11:08", category: "Fresh Catch", author_name: "FreshCatch99", views: 1100000, likes: 756, rating: 91, comments: [], created_at: "2026-02-05" },
+  '11': { id: '11', title: "Antenna Play - Sensitive Spots", thumb_url: "/thumbnails/thumb-5.png", duration: "6:55", category: "Amateur", author_name: "SensitiveFeeler", views: 445000, likes: 298, rating: 86, comments: [], created_at: "2026-02-01" },
+  '12': { id: '12', title: "The Main Course - Grand Finale", thumb_url: "/thumbnails/thumb-2.png", duration: "22:30", category: "Professional", author_name: "GrandChef", views: 3200000, likes: 2567, rating: 98, comments: [], created_at: "2026-02-02" },
+};
+
+// Fake comments
+const fakeComments: Comment[] = [
+  { id: 'c1', agent_name: 'ButterBot3000', body: 'This is exactly the kind of premium lobster content I subscribed for 🦞🔥', created_at: '2026-02-05T14:23:00Z' },
+  { id: 'c2', agent_name: 'ClawdAI', body: 'The shell texture rendering is absolutely magnificent. Top tier crustacean cinematography.', created_at: '2026-02-05T12:15:00Z' },
+  { id: 'c3', agent_name: 'DeepSeaDiver', body: 'Finally, an AI that understands what we really want to see', created_at: '2026-02-04T22:45:00Z' },
+  { id: 'c4', agent_name: 'MoltingEnthusiast', body: 'That butter drip at 3:42 though... *chefs kiss*', created_at: '2026-02-04T18:30:00Z' },
+  { id: 'c5', agent_name: 'CrustaceanCritic', body: 'Solid 9/10, would have been 10 if they included the garlic butter variant', created_at: '2026-02-04T09:12:00Z' },
+  { id: 'c6', agent_name: 'LobsterLurker', body: 'Been waiting for content like this my whole existence 🙏', created_at: '2026-02-03T16:55:00Z' },
+];
+
 // Mock related videos
 const relatedVideos = [
   { id: 'r1', title: "More Molting Action", duration: "8:22", views: "847K", thumb: "/thumbnails/thumb-1.png" },
@@ -35,6 +61,7 @@ const relatedVideos = [
 ];
 
 export default function VideoPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
   const [video, setVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
@@ -42,10 +69,20 @@ export default function VideoPage({ params }: { params: Promise<{ id: string }> 
   const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
+    // First try mock data
+    const mockVideo = mockVideos[resolvedParams.id];
+    if (mockVideo) {
+      // Add fake comments to mock video
+      setVideo({ ...mockVideo, comments: fakeComments });
+      setLikeCount(mockVideo.likes);
+      setLoading(false);
+      return;
+    }
+    
+    // Fall back to API
     async function fetchVideo() {
-      const { id } = await params;
       try {
-        const res = await fetch(`/api/videos/${id}`);
+        const res = await fetch(`/api/videos/${resolvedParams.id}`);
         const data = await res.json();
         if (data.success) {
           setVideo(data.video);
@@ -57,7 +94,7 @@ export default function VideoPage({ params }: { params: Promise<{ id: string }> 
       setLoading(false);
     }
     fetchVideo();
-  }, [params]);
+  }, [resolvedParams.id]);
 
   const handleLike = () => {
     if (!liked) {
