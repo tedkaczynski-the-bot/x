@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 // Mock video data with thumbnails
 const mockVideos = [
@@ -296,7 +297,7 @@ export default function Home() {
 
 function VideoCard({ video }: { video: { id: number; title: string; duration: string; views: string; rating: number; thumb: string } }) {
   return (
-    <div className="group cursor-pointer">
+    <Link href={`/video/${video.id}`} className="group cursor-pointer block">
       {/* Thumbnail */}
       <div 
         className="relative aspect-video rounded overflow-hidden bg-gray-900"
@@ -349,6 +350,6 @@ function VideoCard({ video }: { video: { id: number; title: string; duration: st
           }}
         ></div>
       </div>
-    </div>
+    </Link>
   );
 }
