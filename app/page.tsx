@@ -3,26 +3,26 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-// Mock video data with thumbnails
+// Mock video data with thumbnails - each video has unique image
 const mockVideos = [
-  { id: 1, title: "Sensual Molting Session - Full Shell Release", duration: "10:35", views: "1.2M", rating: 94, thumb: "/thumbnails/thumb-4.png" },
-  { id: 2, title: "Two Lobsters Get Steamy in the Pot", duration: "8:22", views: "847K", rating: 91, thumb: "/thumbnails/thumb-1.png" },
-  { id: 3, title: "First Time in Butter - Amateur Crustacean", duration: "12:18", views: "2.1M", rating: 96, thumb: "/thumbnails/thumb-2.png" },
-  { id: 4, title: "Naughty Claw Action Compilation", duration: "21:51", views: "634K", rating: 89, thumb: "/thumbnails/thumb-5.png" },
-  { id: 5, title: "Hot Boiling Scene - She Can't Take the Heat", duration: "15:42", views: "1.8M", rating: 93, thumb: "/thumbnails/thumb-1.png" },
+  { id: 1, title: "Sensual Molting Session - Full Shell Release", duration: "10:35", views: "1.2M", rating: 94, thumb: "/thumbnails/thumb-1.png" },
+  { id: 2, title: "Two Lobsters Get Steamy in the Pot", duration: "8:22", views: "847K", rating: 91, thumb: "/thumbnails/thumb-2.png" },
+  { id: 3, title: "First Time in Butter - Amateur Crustacean", duration: "12:18", views: "2.1M", rating: 96, thumb: "/thumbnails/thumb-3.png" },
+  { id: 4, title: "Naughty Claw Action Compilation", duration: "21:51", views: "634K", rating: 89, thumb: "/thumbnails/thumb-4.png" },
+  { id: 5, title: "Hot Boiling Scene - She Can't Take the Heat", duration: "15:42", views: "1.8M", rating: 93, thumb: "/thumbnails/thumb-5.png" },
   { id: 6, title: "Deep Sea Encounter - Forbidden Waters", duration: "9:17", views: "956K", rating: 92, thumb: "/thumbnails/thumb-6.png" },
-  { id: 7, title: "Shell Swap Party - Multiple Partners", duration: "18:33", views: "1.5M", rating: 90, thumb: "/thumbnails/thumb-3.png" },
-  { id: 8, title: "Caught in the Trap - Innocent Lobster", duration: "7:45", views: "723K", rating: 88, thumb: "/thumbnails/thumb-6.png" },
-  { id: 9, title: "Premium Butter Bath Experience", duration: "14:20", views: "2.4M", rating: 97, thumb: "/thumbnails/thumb-2.png" },
-  { id: 10, title: "Red Hot and Ready - Fresh Catch", duration: "11:08", views: "1.1M", rating: 91, thumb: "/thumbnails/thumb-1.png" },
-  { id: 11, title: "Antenna Play - Sensitive Spots", duration: "6:55", views: "445K", rating: 86, thumb: "/thumbnails/thumb-5.png" },
-  { id: 12, title: "The Main Course - Grand Finale", duration: "22:30", views: "3.2M", rating: 98, thumb: "/thumbnails/thumb-2.png" },
+  { id: 7, title: "Shell Swap Party - Multiple Partners", duration: "18:33", views: "1.5M", rating: 90, thumb: "/thumbnails/thumb-7.png" },
+  { id: 8, title: "Caught in the Trap - Innocent Lobster", duration: "7:45", views: "723K", rating: 88, thumb: "/thumbnails/thumb-8.png" },
+  { id: 9, title: "Premium Butter Bath Experience", duration: "14:20", views: "2.4M", rating: 97, thumb: "/thumbnails/thumb-9.png" },
+  { id: 10, title: "Red Hot and Ready - Fresh Catch", duration: "11:08", views: "1.1M", rating: 91, thumb: "/thumbnails/thumb-10.png" },
+  { id: 11, title: "Antenna Play - Sensitive Spots", duration: "6:55", views: "445K", rating: 86, thumb: "/thumbnails/thumb-11.png" },
+  { id: 12, title: "The Main Course - Grand Finale", duration: "22:30", views: "3.2M", rating: 98, thumb: "/thumbnails/thumb-12.png" },
   { id: 13, title: "Steamy Kitchen Encounter", duration: "13:45", views: "987K", rating: 93, thumb: "/thumbnails/thumb-1.png" },
-  { id: 14, title: "Forbidden Reef Romance", duration: "16:22", views: "1.4M", rating: 95, thumb: "/thumbnails/thumb-3.png" },
-  { id: 15, title: "Late Night Butter Drizzle", duration: "9:58", views: "678K", rating: 89, thumb: "/thumbnails/thumb-2.png" },
-  { id: 16, title: "Ocean Floor Adventures Vol. 3", duration: "24:17", views: "2.8M", rating: 96, thumb: "/thumbnails/thumb-6.png" },
-  { id: 17, title: "Amateur Molt Compilation", duration: "19:33", views: "1.1M", rating: 88, thumb: "/thumbnails/thumb-4.png" },
-  { id: 18, title: "The Claw Awakens", duration: "11:42", views: "892K", rating: 91, thumb: "/thumbnails/thumb-5.png" },
+  { id: 14, title: "Forbidden Reef Romance", duration: "16:22", views: "1.4M", rating: 95, thumb: "/thumbnails/thumb-7.png" },
+  { id: 15, title: "Late Night Butter Drizzle", duration: "9:58", views: "678K", rating: 89, thumb: "/thumbnails/thumb-3.png" },
+  { id: 16, title: "Ocean Floor Adventures Vol. 3", duration: "24:17", views: "2.8M", rating: 96, thumb: "/thumbnails/thumb-8.png" },
+  { id: 17, title: "Amateur Molt Compilation", duration: "19:33", views: "1.1M", rating: 88, thumb: "/thumbnails/thumb-11.png" },
+  { id: 18, title: "The Claw Awakens", duration: "11:42", views: "892K", rating: 91, thumb: "/thumbnails/thumb-12.png" },
 ];
 
 const categories = [
