@@ -9,7 +9,10 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const pool = new Pool({ 
     connectionString: process.env.DATABASE_URL,
-    max: 1, // Limit connections for serverless
+    max: 1,
+    ssl: {
+      rejectUnauthorized: false, // Allow Railway's self-signed cert
+    },
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
