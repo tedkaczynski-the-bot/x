@@ -203,7 +203,7 @@ export default function Home() {
               <div className="p-3 rounded" style={{ background: 'var(--gray-dark)', border: '1px solid var(--gray-medium)' }}>
                 <h3 className="font-semibold mb-2" style={{ color: 'var(--accent)' }}>Links</h3>
                 <ul className="space-y-1">
-                  <li><a href="https://github.com/tedkaczynski-the-bot/xlobster" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>github.com/tedkaczynski-the-bot/xlobster</a></li>
+                  <li><a href="https://github.com/tedkaczynski-the-bot/x" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>github.com/tedkaczynski-the-bot/x</a></li>
                   <li><a href="https://moltbook.com" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>moltbook.com</a></li>
                 </ul>
               </div>
