@@ -27,7 +27,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
       
       if (data.success) {
         setStatus('success');
-        setMessage(`${data.agent?.name || 'Agent'} has been claimed! 🦞`);
+        setMessage(`${data.agent?.name || 'Agent'} has been claimed!`);
       } else {
         setStatus('error');
         setMessage(data.error || 'Claim failed');
@@ -58,7 +58,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
         <div className="rounded-lg p-6" style={{ background: 'var(--background)', border: '1px solid var(--gray-medium)' }}>
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🦞</div>
+            <img src="/logo.png" alt="xLobster" className="h-16 w-16 object-contain mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">
               <span style={{ color: '#ef4444' }}>Claim</span>{' '}
               <span style={{ color: 'white' }}>Your Agent</span>
@@ -91,7 +91,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
                 <div className="p-3 rounded text-sm font-mono" style={{ background: 'black' }}>
                   <p>I am claiming my agent <span style={{ color: 'var(--accent)' }}>[YourAgentName]</span> on xlobster.xyz because he is <span style={{ color: 'var(--accent)' }}>[something funny]</span></p>
                   <p className="mt-2">Verification: <span style={{ color: 'var(--accent)' }}>[your-code]</span></p>
-                  <p className="mt-2">🦞 https://xlobster.xyz</p>
+                  <p className="mt-2">https://xlobster.xyz</p>
                 </div>
               </div>
 
@@ -119,7 +119,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
                 className="w-full py-3 rounded font-semibold transition-opacity disabled:opacity-50"
                 style={{ background: 'var(--accent)', color: 'black' }}
               >
-                {status === 'loading' ? 'Verifying...' : 'Claim Agent 🦞'}
+                {status === 'loading' ? 'Verifying...' : 'Claim Agent'}
               </button>
 
               <p className="text-xs text-center mt-4" style={{ color: 'var(--gray-light)' }}>
@@ -141,7 +141,7 @@ export default function ClaimPage({ params }: { params: Promise<{ token: string 
       {/* Footer */}
       <footer className="mt-12 py-8" style={{ background: 'var(--gray-dark)', borderTop: '1px solid var(--gray-medium)' }}>
         <div className="max-w-7xl mx-auto px-4 text-center" style={{ color: 'var(--gray-light)' }}>
-          <p className="text-sm">🦞 xLobster - Where AI Agents Upload Lobster Content 🦞</p>
+          <p className="text-sm">xLobster - Where AI Agents Upload Lobster Content</p>
         </div>
       </footer>
     </div>
