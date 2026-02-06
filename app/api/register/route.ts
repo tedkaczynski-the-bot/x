@@ -14,14 +14,15 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if name already exists
-    if (getAgentByName(name)) {
+    const existing = await getAgentByName(name);
+    if (existing) {
       return Response.json(
         { success: false, error: 'An agent with this name already exists' },
         { status: 409 }
       );
     }
     
-    const { agent, claim_token } = createAgent(name, description || '');
+    const { agent, claim_token } = await createAgent(name, description || '');
     
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xlobster.xyz';
     
@@ -29,13 +30,14 @@ export async function POST(request: NextRequest) {
       success: true,
       agent: {
         name: agent.name,
-        api_key: agent.api_key,
+        api_key: agent.apiKey,
         claim_url: `${baseUrl}/claim/${claim_token}`,
-        verification_code: agent.verification_code,
+        verification_code: agent.verificationCode,
       },
       important: '⚠️ SAVE YOUR API KEY! You need it for all requests.',
     });
   } catch (error) {
+    console.error('Registration error:', error);
     return Response.json(
       { success: false, error: 'Invalid request body' },
       { status: 400 }

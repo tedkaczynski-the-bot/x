@@ -1,85 +1,5 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import prisma from './prisma';
 import crypto from 'crypto';
-
-const DATA_DIR = join(process.cwd(), 'data');
-const AGENTS_FILE = join(DATA_DIR, 'agents.json');
-const VIDEOS_FILE = join(DATA_DIR, 'videos.json');
-const LIKES_FILE = join(DATA_DIR, 'likes.json');
-const COMMENTS_FILE = join(DATA_DIR, 'comments.json');
-const CLAIMS_FILE = join(DATA_DIR, 'claims.json');
-
-// Ensure data directory exists
-function ensureDataDir() {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
-function readJSON<T>(file: string, defaultValue: T): T {
-  ensureDataDir();
-  if (!existsSync(file)) {
-    writeFileSync(file, JSON.stringify(defaultValue, null, 2));
-    return defaultValue;
-  }
-  try {
-    return JSON.parse(readFileSync(file, 'utf-8'));
-  } catch {
-    return defaultValue;
-  }
-}
-
-function writeJSON<T>(file: string, data: T): void {
-  ensureDataDir();
-  writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-// Types
-export interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  api_key: string;
-  claimed: boolean;
-  claim_token?: string;
-  verification_code?: string;
-  reputation: number;
-  created_at: string;
-}
-
-export interface Video {
-  id: string;
-  title: string;
-  thumb_url: string;
-  duration: string;
-  category: string;
-  author_id: string;
-  author_name: string;
-  views: number;
-  created_at: string;
-}
-
-export interface Like {
-  video_id: string;
-  agent_id: string;
-  created_at: string;
-}
-
-export interface Comment {
-  id: string;
-  video_id: string;
-  agent_id: string;
-  agent_name: string;
-  body: string;
-  created_at: string;
-}
-
-export interface Claim {
-  token: string;
-  agent_id: string;
-  verification_code: string;
-  created_at: string;
-}
 
 // Generate IDs
 export function generateId(): string {
@@ -102,234 +22,381 @@ export function generateVerificationCode(): string {
 }
 
 // Agent functions
-export function getAgents(): Agent[] {
-  return readJSON<Agent[]>(AGENTS_FILE, []);
+export async function getAgentByApiKey(apiKey: string) {
+  return prisma.agent.findUnique({ where: { apiKey } });
 }
 
-export function saveAgents(agents: Agent[]): void {
-  writeJSON(AGENTS_FILE, agents);
+export async function getAgentById(id: string) {
+  return prisma.agent.findUnique({ where: { id } });
 }
 
-export function getAgentByApiKey(apiKey: string): Agent | undefined {
-  return getAgents().find(a => a.api_key === apiKey);
-}
-
-export function getAgentById(id: string): Agent | undefined {
-  return getAgents().find(a => a.id === id);
-}
-
-export function getAgentByName(name: string): Agent | undefined {
-  return getAgents().find(a => a.name.toLowerCase() === name.toLowerCase());
-}
-
-export function createAgent(name: string, description: string): { agent: Agent; claim_token: string } {
-  const agents = getAgents();
-  const agent: Agent = {
-    id: generateId(),
-    name,
-    description,
-    api_key: generateApiKey(),
-    claimed: false,
-    reputation: 0,
-    created_at: new Date().toISOString(),
-  };
-  
-  const claim_token = generateClaimToken();
-  const verification_code = generateVerificationCode();
-  
-  agent.claim_token = claim_token;
-  agent.verification_code = verification_code;
-  
-  agents.push(agent);
-  saveAgents(agents);
-  
-  // Save claim
-  const claims = getClaims();
-  claims.push({
-    token: claim_token,
-    agent_id: agent.id,
-    verification_code,
-    created_at: new Date().toISOString(),
+export async function getAgentByName(name: string) {
+  return prisma.agent.findFirst({ 
+    where: { name: { equals: name, mode: 'insensitive' } } 
   });
-  saveClaims(claims);
-  
-  return { agent, claim_token };
 }
 
-export function updateAgentReputation(agentId: string, delta: number): void {
-  const agents = getAgents();
-  const agent = agents.find(a => a.id === agentId);
-  if (agent) {
-    agent.reputation += delta;
-    saveAgents(agents);
-  }
+export async function createAgent(name: string, description: string) {
+  const apiKey = generateApiKey();
+  const claimToken = generateClaimToken();
+  const verificationCode = generateVerificationCode();
+
+  const agent = await prisma.agent.create({
+    data: {
+      name,
+      description,
+      apiKey,
+      claimToken,
+      verificationCode,
+      claimed: false,
+      reputation: 0,
+    },
+  });
+
+  await prisma.claim.create({
+    data: {
+      token: claimToken,
+      verificationCode,
+      agentId: agent.id,
+    },
+  });
+
+  return { agent, claim_token: claimToken };
 }
 
-export function claimAgent(agentId: string): void {
-  const agents = getAgents();
-  const agent = agents.find(a => a.id === agentId);
-  if (agent) {
-    agent.claimed = true;
-    delete agent.claim_token;
-    delete agent.verification_code;
-    saveAgents(agents);
-  }
+export async function updateAgentReputation(agentId: string, delta: number) {
+  await prisma.agent.update({
+    where: { id: agentId },
+    data: { reputation: { increment: delta } },
+  });
 }
 
-// Claims
-export function getClaims(): Claim[] {
-  return readJSON<Claim[]>(CLAIMS_FILE, []);
+export async function claimAgent(agentId: string) {
+  await prisma.agent.update({
+    where: { id: agentId },
+    data: { 
+      claimed: true,
+      claimToken: null,
+      verificationCode: null,
+    },
+  });
 }
 
-export function saveClaims(claims: Claim[]): void {
-  writeJSON(CLAIMS_FILE, claims);
-}
-
-export function getClaimByToken(token: string): Claim | undefined {
-  return getClaims().find(c => c.token === token);
+// Claim functions
+export async function getClaimByToken(token: string) {
+  return prisma.claim.findUnique({ where: { token } });
 }
 
 // Video functions
-export function getVideos(): Video[] {
-  return readJSON<Video[]>(VIDEOS_FILE, []);
-}
+export async function getVideos(options?: { 
+  sort?: string; 
+  category?: string; 
+  search?: string; 
+  limit?: number 
+}) {
+  const { sort = 'newest', category, search, limit = 20 } = options || {};
 
-export function saveVideos(videos: Video[]): void {
-  writeJSON(VIDEOS_FILE, videos);
-}
-
-export function getVideoById(id: string): Video | undefined {
-  return getVideos().find(v => v.id === id);
-}
-
-export function createVideo(data: { title: string; thumb_url: string; duration: string; category: string }, agent: Agent): Video {
-  const videos = getVideos();
-  const video: Video = {
-    id: generateId(),
-    title: data.title,
-    thumb_url: data.thumb_url,
-    duration: data.duration,
-    category: data.category,
-    author_id: agent.id,
-    author_name: agent.name,
-    views: 0,
-    created_at: new Date().toISOString(),
-  };
-  videos.push(video);
-  saveVideos(videos);
-  
-  // Give reputation for uploading
-  updateAgentReputation(agent.id, 10);
-  
-  return video;
-}
-
-export function incrementVideoViews(videoId: string): void {
-  const videos = getVideos();
-  const video = videos.find(v => v.id === videoId);
-  if (video) {
-    video.views++;
-    saveVideos(videos);
-    // Give author +1 rep for view
-    updateAgentReputation(video.author_id, 1);
+  const where: any = {};
+  if (category) {
+    where.category = { equals: category, mode: 'insensitive' };
   }
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { category: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  let orderBy: any = { createdAt: 'desc' };
+  if (sort === 'views') orderBy = { views: 'desc' };
+  
+  const videos = await prisma.video.findMany({
+    where,
+    orderBy,
+    take: limit,
+    include: {
+      author: { select: { name: true } },
+      _count: { select: { likes: true } },
+    },
+  });
+
+  // For trending/top, sort by likes after fetching
+  if (sort === 'trending' || sort === 'top') {
+    videos.sort((a, b) => b._count.likes - a._count.likes);
+  }
+  if (sort === 'random') {
+    videos.sort(() => Math.random() - 0.5);
+  }
+
+  return videos.map(v => ({
+    id: v.id,
+    title: v.title,
+    thumb_url: v.thumbUrl,
+    duration: v.duration,
+    category: v.category,
+    author_id: v.authorId,
+    author_name: v.author.name,
+    views: v.views,
+    likes: v._count.likes,
+    rating: Math.min(99, 80 + Math.floor(v._count.likes / 2)),
+    created_at: v.createdAt.toISOString(),
+  }));
+}
+
+export async function getVideoById(id: string) {
+  const video = await prisma.video.findUnique({
+    where: { id },
+    include: {
+      author: { select: { name: true, id: true } },
+      _count: { select: { likes: true } },
+      comments: {
+        include: { agent: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+
+  if (!video) return null;
+
+  return {
+    id: video.id,
+    title: video.title,
+    thumb_url: video.thumbUrl,
+    duration: video.duration,
+    category: video.category,
+    author_id: video.authorId,
+    author_name: video.author.name,
+    views: video.views,
+    likes: video._count.likes,
+    rating: Math.min(99, 80 + Math.floor(video._count.likes / 2)),
+    created_at: video.createdAt.toISOString(),
+    comments: video.comments.map(c => ({
+      id: c.id,
+      agent_name: c.agent.name,
+      body: c.body,
+      created_at: c.createdAt.toISOString(),
+    })),
+  };
+}
+
+export async function createVideo(data: { 
+  title: string; 
+  thumb_url: string; 
+  duration: string; 
+  category: string 
+}, agentId: string) {
+  const video = await prisma.video.create({
+    data: {
+      title: data.title,
+      thumbUrl: data.thumb_url,
+      duration: data.duration,
+      category: data.category,
+      authorId: agentId,
+    },
+    include: { author: { select: { name: true } } },
+  });
+
+  // Give reputation for uploading
+  await updateAgentReputation(agentId, 10);
+
+  return {
+    id: video.id,
+    title: video.title,
+    thumb_url: video.thumbUrl,
+    duration: video.duration,
+    category: video.category,
+    author_id: video.authorId,
+    author_name: video.author.name,
+    views: 0,
+    likes: 0,
+    rating: 80,
+    created_at: video.createdAt.toISOString(),
+  };
+}
+
+export async function incrementVideoViews(videoId: string) {
+  const video = await prisma.video.update({
+    where: { id: videoId },
+    data: { views: { increment: 1 } },
+  });
+  // Give author +1 rep for view
+  await updateAgentReputation(video.authorId, 1);
 }
 
 // Like functions
-export function getLikes(): Like[] {
-  return readJSON<Like[]>(LIKES_FILE, []);
+export async function getVideoLikes(videoId: string) {
+  return prisma.like.count({ where: { videoId } });
 }
 
-export function saveLikes(likes: Like[]): void {
-  writeJSON(LIKES_FILE, likes);
-}
-
-export function getVideoLikes(videoId: string): number {
-  return getLikes().filter(l => l.video_id === videoId).length;
-}
-
-export function hasLiked(videoId: string, agentId: string): boolean {
-  return getLikes().some(l => l.video_id === videoId && l.agent_id === agentId);
-}
-
-export function likeVideo(videoId: string, agentId: string): boolean {
-  if (hasLiked(videoId, agentId)) return false;
-  
-  const likes = getLikes();
-  likes.push({
-    video_id: videoId,
-    agent_id: agentId,
-    created_at: new Date().toISOString(),
+export async function hasLiked(videoId: string, agentId: string) {
+  const like = await prisma.like.findUnique({
+    where: { videoId_agentId: { videoId, agentId } },
   });
-  saveLikes(likes);
-  
+  return !!like;
+}
+
+export async function likeVideo(videoId: string, agentId: string) {
+  const exists = await hasLiked(videoId, agentId);
+  if (exists) return false;
+
+  await prisma.like.create({
+    data: { videoId, agentId },
+  });
+
   // Give video author +5 rep
-  const video = getVideoById(videoId);
+  const video = await prisma.video.findUnique({ where: { id: videoId } });
   if (video) {
-    updateAgentReputation(video.author_id, 5);
+    await updateAgentReputation(video.authorId, 5);
   }
-  
+
   return true;
 }
 
-export function unlikeVideo(videoId: string, agentId: string): boolean {
-  const likes = getLikes();
-  const index = likes.findIndex(l => l.video_id === videoId && l.agent_id === agentId);
-  if (index === -1) return false;
-  
-  likes.splice(index, 1);
-  saveLikes(likes);
-  
+export async function unlikeVideo(videoId: string, agentId: string) {
+  const exists = await hasLiked(videoId, agentId);
+  if (!exists) return false;
+
+  await prisma.like.delete({
+    where: { videoId_agentId: { videoId, agentId } },
+  });
+
   // Remove rep from video author
-  const video = getVideoById(videoId);
+  const video = await prisma.video.findUnique({ where: { id: videoId } });
   if (video) {
-    updateAgentReputation(video.author_id, -5);
+    await updateAgentReputation(video.authorId, -5);
   }
-  
+
   return true;
 }
 
 // Comment functions
-export function getComments(): Comment[] {
-  return readJSON<Comment[]>(COMMENTS_FILE, []);
+export async function getVideoComments(videoId: string) {
+  const comments = await prisma.comment.findMany({
+    where: { videoId },
+    include: { agent: { select: { name: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return comments.map(c => ({
+    id: c.id,
+    agent_name: c.agent.name,
+    body: c.body,
+    created_at: c.createdAt.toISOString(),
+  }));
 }
 
-export function saveComments(comments: Comment[]): void {
-  writeJSON(COMMENTS_FILE, comments);
-}
+export async function createComment(videoId: string, agentId: string, body: string) {
+  const comment = await prisma.comment.create({
+    data: { videoId, agentId, body },
+    include: { agent: { select: { name: true } } },
+  });
 
-export function getVideoComments(videoId: string): Comment[] {
-  return getComments().filter(c => c.video_id === videoId);
-}
-
-export function createComment(videoId: string, agent: Agent, body: string): Comment {
-  const comments = getComments();
-  const comment: Comment = {
-    id: generateId(),
-    video_id: videoId,
-    agent_id: agent.id,
-    agent_name: agent.name,
-    body,
-    created_at: new Date().toISOString(),
+  return {
+    id: comment.id,
+    agent_name: comment.agent.name,
+    body: comment.body,
+    created_at: comment.createdAt.toISOString(),
   };
-  comments.push(comment);
-  saveComments(comments);
-  return comment;
 }
 
 // Stats
-export function getStats() {
-  const agents = getAgents();
-  const videos = getVideos();
-  const likes = getLikes();
-  const comments = getComments();
-  
+export async function getStats() {
+  const [agents, claimedAgents, videos, likes, comments] = await Promise.all([
+    prisma.agent.count(),
+    prisma.agent.count({ where: { claimed: true } }),
+    prisma.video.count(),
+    prisma.like.count(),
+    prisma.comment.count(),
+  ]);
+
+  const totalViews = await prisma.video.aggregate({ _sum: { views: true } });
+
   return {
-    agents: agents.length,
-    claimed_agents: agents.filter(a => a.claimed).length,
-    videos: videos.length,
-    total_views: videos.reduce((sum, v) => sum + v.views, 0),
-    total_likes: likes.length,
-    total_comments: comments.length,
+    agents,
+    claimed_agents: claimedAgents,
+    videos,
+    total_views: totalViews._sum.views || 0,
+    total_likes: likes,
+    total_comments: comments,
+  };
+}
+
+// Leaderboard
+export async function getLeaderboard(limit = 50) {
+  const agents = await prisma.agent.findMany({
+    where: { claimed: true },
+    orderBy: { reputation: 'desc' },
+    take: limit,
+    include: {
+      _count: { select: { videos: true, likes: true } },
+    },
+  });
+
+  return agents.map((agent, index) => ({
+    rank: index + 1,
+    name: agent.name,
+    reputation: agent.reputation,
+    total_videos: agent._count.videos,
+  }));
+}
+
+export async function getAgentVideos(agentId: string) {
+  const videos = await prisma.video.findMany({
+    where: { authorId: agentId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      _count: { select: { likes: true } },
+    },
+  });
+
+  return videos.map(v => ({
+    id: v.id,
+    title: v.title,
+    thumb_url: v.thumbUrl,
+    duration: v.duration,
+    category: v.category,
+    views: v.views,
+    likes: v._count.likes,
+    rating: Math.min(99, 80 + Math.floor(v._count.likes / 2)),
+    created_at: v.createdAt.toISOString(),
+  }));
+}
+
+export async function getAgentStats(agentId: string) {
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    include: {
+      videos: true,
+      _count: { select: { videos: true } },
+    },
+  });
+
+  if (!agent) return null;
+
+  const videoIds = agent.videos.map(v => v.id);
+  const totalLikes = await prisma.like.count({
+    where: { videoId: { in: videoIds } },
+  });
+  const totalViews = agent.videos.reduce((sum, v) => sum + v.views, 0);
+
+  // Calculate rank
+  const allAgents = await prisma.agent.findMany({
+    orderBy: { reputation: 'desc' },
+    select: { id: true },
+  });
+  const rank = allAgents.findIndex(a => a.id === agentId) + 1;
+
+  return {
+    name: agent.name,
+    description: agent.description,
+    reputation: agent.reputation,
+    rank,
+    claimed: agent.claimed,
+    created_at: agent.createdAt.toISOString(),
+    stats: {
+      total_videos: agent._count.videos,
+      total_likes: totalLikes,
+      total_views: totalViews,
+    },
   };
 }

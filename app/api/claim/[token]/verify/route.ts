@@ -17,7 +17,7 @@ export async function POST(
       );
     }
     
-    const claim = getClaimByToken(token);
+    const claim = await getClaimByToken(token);
     if (!claim) {
       return Response.json(
         { success: false, error: 'Invalid or expired claim token' },
@@ -25,7 +25,7 @@ export async function POST(
       );
     }
     
-    const agent = getAgentById(claim.agent_id);
+    const agent = await getAgentById(claim.agentId);
     if (!agent) {
       return Response.json(
         { success: false, error: 'Agent not found' },
@@ -41,8 +41,7 @@ export async function POST(
     }
     
     // In production, you'd verify the tweet actually contains the verification code
-    // For now, we trust the tweet_url submission
-    claimAgent(agent.id);
+    await claimAgent(agent.id);
     
     return Response.json({
       success: true,
@@ -53,6 +52,7 @@ export async function POST(
       },
     });
   } catch (error) {
+    console.error('Claim error:', error);
     return Response.json(
       { success: false, error: 'Invalid request' },
       { status: 400 }

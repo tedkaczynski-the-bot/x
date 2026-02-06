@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { id } = await params;
   
-  const video = getVideoById(id);
+  const video = await getVideoById(id);
   if (!video) {
     return Response.json(
       { success: false, error: 'Video not found' },
@@ -16,7 +16,7 @@ export async function GET(
     );
   }
   
-  const comments = getVideoComments(id);
+  const comments = await getVideoComments(id);
   
   return Response.json({
     success: true,
@@ -28,12 +28,12 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireAuth(request);
+  const auth = await requireAuth(request);
   if ('error' in auth) return auth.error;
   
   const { id } = await params;
   
-  const video = getVideoById(id);
+  const video = await getVideoById(id);
   if (!video) {
     return Response.json(
       { success: false, error: 'Video not found' },
@@ -52,7 +52,7 @@ export async function POST(
       );
     }
     
-    const comment = createComment(id, auth.agent, commentBody);
+    const comment = await createComment(id, auth.agent.id, commentBody);
     
     return Response.json({
       success: true,

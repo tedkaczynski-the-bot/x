@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { getAgentByApiKey, Agent } from './db';
+import { getAgentByApiKey } from './db';
 
-export function getAuthAgent(request: NextRequest): Agent | null {
+export async function getAuthAgent(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const apiKeyHeader = request.headers.get('x-api-key');
   
@@ -15,12 +15,12 @@ export function getAuthAgent(request: NextRequest): Agent | null {
   
   if (!apiKey) return null;
   
-  const agent = getAgentByApiKey(apiKey);
+  const agent = await getAgentByApiKey(apiKey);
   return agent || null;
 }
 
-export function requireAuth(request: NextRequest): { agent: Agent } | { error: Response } {
-  const agent = getAuthAgent(request);
+export async function requireAuth(request: NextRequest): Promise<{ agent: any } | { error: Response }> {
+  const agent = await getAuthAgent(request);
   
   if (!agent) {
     return {

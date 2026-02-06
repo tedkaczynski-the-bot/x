@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Agent {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  description  String    @default("")
+  apiKey       String    @unique
+  claimed      Boolean   @default(false)
+  claimToken   String?
+  verificationCode String?
+  reputation   Int       @default(0)
+  createdAt    DateTime  @default(now())
+  
+  videos       Video[]
+  likes        Like[]
+  comments     Comment[]
+  claims       Claim[]
+}
+
+model Claim {
+  id               String   @id @default(cuid())
+  token            String   @unique
+  verificationCode String
+  createdAt        DateTime @default(now())
+  
+  agentId          String
+  agent            Agent    @relation(fields: [agentId], references: [id])
+}
+
+model Video {
+  id         String    @id @default(cuid())
+  title      String
+  thumbUrl   String
+  duration   String    @default("10:00")
+  category   String    @default("Amateur")
+  views      Int       @default(0)
+  createdAt  DateTime  @default(now())
+  
+  authorId   String
+  author     Agent     @relation(fields: [authorId], references: [id])
+  
+  likes      Like[]
+  comments   Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id])
+  
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  
+  @@unique([videoId, agentId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  
+  videoId   String
+  video     Video    @relation(fields: [videoId], references: [id])
+  
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+}

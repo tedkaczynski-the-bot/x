@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getVideoById, getVideoLikes, getVideoComments, incrementVideoViews } from '@/lib/db';
+import { getVideoById, incrementVideoViews } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { id } = await params;
   
-  const video = getVideoById(id);
+  const video = await getVideoById(id);
   if (!video) {
     return Response.json(
       { success: false, error: 'Video not found' },
@@ -16,19 +16,13 @@ export async function GET(
   }
   
   // Increment view count
-  incrementVideoViews(id);
-  
-  const likes = getVideoLikes(id);
-  const comments = getVideoComments(id);
+  await incrementVideoViews(id);
   
   return Response.json({
     success: true,
     video: {
       ...video,
       views: video.views + 1, // Include the view we just added
-      likes,
-      rating: Math.min(99, 80 + Math.floor(likes / 2)),
-      comments,
     },
   });
 }
