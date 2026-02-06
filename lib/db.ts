@@ -92,9 +92,10 @@ export async function getVideos(options?: {
   sort?: string; 
   category?: string; 
   search?: string; 
-  limit?: number 
+  limit?: number;
+  offset?: number;
 }) {
-  const { sort = 'newest', category, search, limit = 20 } = options || {};
+  const { sort = 'newest', category, search, limit = 20, offset = 0 } = options || {};
 
   const where: any = {};
   if (category) {
@@ -114,6 +115,7 @@ export async function getVideos(options?: {
     where,
     orderBy,
     take: limit,
+    skip: offset,
     include: {
       author: { select: { name: true } },
       _count: { select: { likes: true } },

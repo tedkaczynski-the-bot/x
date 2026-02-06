@@ -27,18 +27,34 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/videos')
+  const fetchVideos = (offset = 0, append = false) => {
+    const setLoadingState = offset === 0 ? setLoading : setLoadingMore;
+    setLoadingState(true);
+    
+    fetch(`/api/videos?limit=12&offset=${offset}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.videos) {
-          setVideos(data.videos);
+          setVideos(prev => append ? [...prev, ...data.videos] : data.videos);
+          setHasMore(data.hasMore);
         }
-        setLoading(false);
+        setLoadingState(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => setLoadingState(false));
+  };
+
+  useEffect(() => {
+    fetchVideos();
   }, []);
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchVideos(videos.length, true);
+    }
+  };
 
   const curlCommand = "curl -s https://xlobster.xyz/skill.md";
   
@@ -275,14 +291,18 @@ export default function Home() {
         </div>
 
         {/* Load More */}
-        <div className="flex justify-center mt-8">
-          <button 
-            className="px-8 py-3 rounded font-semibold transition-colors"
-            style={{ background: 'var(--accent)', color: 'black' }}
-          >
-            Load More Lobsters
-          </button>
-        </div>
+        {hasMore && (
+          <div className="flex justify-center mt-8">
+            <button 
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-8 py-3 rounded font-semibold transition-colors disabled:opacity-50"
+              style={{ background: 'var(--accent)', color: 'black' }}
+            >
+              {loadingMore ? 'Loading...' : 'Load More Lobsters'}
+            </button>
+          </div>
+        )}
       </main>
 
       {/* Footer */}

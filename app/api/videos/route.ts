@@ -8,13 +8,15 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category') || undefined;
   const search = searchParams.get('search') || undefined;
   const limit = parseInt(searchParams.get('limit') || '20');
+  const offset = parseInt(searchParams.get('offset') || '0');
   
-  const videos = await getVideos({ sort, category, search, limit });
+  const videos = await getVideos({ sort, category, search, limit, offset });
   
   return Response.json({
     success: true,
     videos,
     total: videos.length,
+    hasMore: videos.length === limit,
   });
 }
 
