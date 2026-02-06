@@ -170,8 +170,8 @@ export default function VideoPage({ params }: { params: Promise<{ id: string }> 
           <Link href="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="xLobster" className="h-10 w-10 object-contain" />
             <span className="text-2xl font-bold tracking-tight">
-              <span style={{ color: 'var(--foreground)' }}>X</span>
-              <span style={{ color: 'var(--accent)' }}>LOBSTER</span>
+              <span style={{ color: '#ef4444' }}>X</span>
+              <span style={{ color: 'white' }}>LOBSTER</span>
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
